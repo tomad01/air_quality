@@ -10,6 +10,6 @@ MQ-2 Gas (analogic ~ 150 mA)\
 GP2Y1010AU0F (analogic dust senzor using infrared led - 20 mA)\
 
 Arduino is waiting from Raspberry an income message and then collects and send data.\
-Raspberry gets all data and is writing it down to a csv perioadically
+Raspberry gets all data and is writing it down to a csv periodically
 
 
