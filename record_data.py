@@ -2,7 +2,7 @@ from datetime import datetime
 from glob import glob
 import time,csv,os,subprocess,re,pdb,sys
 import uuid
-
+import old.email as em
 import pandas as pd
 import serial
 
@@ -80,7 +80,13 @@ serial_regex = re.compile('ust: (\d+\.\d+) ug\/m3 gas: (\d+\.\d+) en')
 
 
 session_id = str(uuid.uuid1())
+contor =0
 while True:
+    if contor==5:
+        process = subprocess.Popen('tail -n 7 %s'%file1, shell=True, stdout=subprocess.PIPE)
+        res = process.stdout.read().decode().encode('ascii','ignore')
+        em.send(res)
+    #############################################    
     time.sleep(SLEEP_TIME)
     timestamp=datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S")
     #############################################
@@ -94,8 +100,9 @@ while True:
 	    line = serial_regex.findall(line)
             gas  = float(str(line[0][1].encode('ascii','ignore')))
             dust = float(str(line[0][0].encode('ascii','ignore')))
-        except Exception as er:
-
+            if gas>100:
+                em.send('warning gas over 100 %f'%gas)
+        except Exception as er:    
             print(str(er))
     #############################################
     if COLLECT_WIFI_DATA:
@@ -121,6 +128,7 @@ while True:
     if tsize/1e6>limit*1000:
         print('max size limit reached')
         break
+    contor +=1
     
     
 """
