@@ -71,9 +71,11 @@ print('max GB size allowed of data:',limit)
 
 
 wifi_regex = re.compile('Signal level=(\-\d{1,2}) dBm\s+\n\s+ESSID:\"(.+?)\"')
-
-ser = serial.Serial(SERIAL_ADDR, 9600, timeout=1)
-ser.reset_input_buffer()
+try:
+    ser = serial.Serial(SERIAL_ADDR, 9600, timeout=1)
+    ser.reset_input_buffer()
+except:
+    pass
 serial_regex = re.compile('ust: (\d+\.\d+) ug\/m3 gas: (\d+\.\d+) en')
 
 
