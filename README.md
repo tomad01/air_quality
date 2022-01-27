@@ -22,5 +22,5 @@ Arduino is waiting from Raspberry an income message and then collects and send d
 Raspberry gets all data and is writing it down to a csv periodically
 
 The process is automated using supervisord (see conf files)
-You need to create an empty "logs" dir in the script dir before deploying
+You need to create an empty "logs" dir in the script dir before deploying.\
 Check requierments files before installing. There are some packages that can be omitted.
