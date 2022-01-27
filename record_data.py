@@ -2,29 +2,26 @@ from datetime import datetime
 from glob import glob
 import time,csv,os,subprocess,re,pdb,sys
 import uuid
-import old.email as em
+try:
+    import old.email as em
+except:
+    pass
 import pandas as pd
 import serial
 
 import logging
+import argparse
+##########################
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-logging.basicConfig(filename=dname+'/logs/senzors.log',format='%(asctime)s %(levelname)s:%(message)s', encoding='utf-8', level=logging.INFO)
-
 from Adafruit_BMP import BMP085
 import Adafruit_DHT as dht
-
-import argparse
+##########################
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', type=bool, default=False, help='debug')
 args = parser.parse_args()
-
-logging.info('py version '+str(sys.version))
-process = subprocess.Popen('ifconfig | grep wlan', shell=True, stdout=subprocess.PIPE)
-logging.info(process.stdout.read().decode())
-
 ##########################
 PERCENT_FROM_AVAILABLE_SPACE = 0.5 # max space to fill with data
 DATA_DIR = './data'
@@ -32,9 +29,14 @@ SLEEP_TIME = 9
 COLLECT_WIFI_DATA = True
 COLLECT_ARDUINO_DATA = True
 SERIAL_ADDR = '/dev/ttyACM0'
-FILE_NAME = 'data_sensors_test.csv' if args.debug else 'data_sensors.csv'
+DATA_FILE_NAME = 'data_sensors_test.csv' if args.debug else 'data_sensors.csv'
+LOG_FILE = 'senzors_test.log' if args.debug else 'sensors.log'
 DEBUG = args.debug
 ##########################
+logging.basicConfig(filename=dname+'/logs/'+LOG_FILE,format='%(asctime)s %(levelname)s:%(message)s', encoding='utf-8', level=logging.INFO)
+logging.info('py version '+str(sys.version))
+process = subprocess.Popen('ifconfig | grep wlan', shell=True, stdout=subprocess.PIPE)
+logging.info(process.stdout.read().decode())
 
 
 def get_dht22_data():
@@ -63,7 +65,7 @@ def get_bmp180_data():
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
-file1 = DATA_DIR+'/'+FILE_NAME
+file1 = DATA_DIR+'/'+DATA_FILE_NAME
 add_header = not os.path.exists(file1)
 conn1 = open(file1,'a')
 writer1 = csv.writer(conn1)
@@ -99,7 +101,10 @@ while True:
     if contor==5:
         process = subprocess.Popen('tail -n 7 %s'%file1, shell=True, stdout=subprocess.PIPE)
         res = process.stdout.read().decode().encode('ascii','ignore')
-        em.send(res)
+        try:
+            em.send(res)
+        except:
+            pass
     #############################################    
     time.sleep(SLEEP_TIME)
     timestamp=datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S")
