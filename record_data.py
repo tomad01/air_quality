@@ -27,7 +27,9 @@ DATA_FILE_NAME = 'data_sensors_test.csv' if args.debug else 'data_sensors.csv'
 LOG_FILE = 'sensors_test.log' if args.debug else 'sensors.log'
 DEBUG = args.debug
 ##########################
-logging.basicConfig(filename=dname+'/logs/'+LOG_FILE,format='%(asctime)s %(levelname)s:%(message)s', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(filename=dname+'/logs/'+LOG_FILE,
+                    format='%(asctime)s %(levelname)s:%(message)s', 
+                    level=logging.INFO)
 logging.info('py version '+str(sys.version))
 process = subprocess.Popen('ifconfig | grep wlan', shell=True, stdout=subprocess.PIPE)
 logging.info(process.stdout.read().decode())
@@ -112,13 +114,14 @@ while True:
         try:
             ser.write(b"Hello from Raspberry Pi!\n")
             line = ser.readline().decode('utf-8').rstrip()
-	    line = serial_regex.findall(line)
+            line = serial_regex.findall(line)
             gas  = float(str(line[0][1].encode('ascii','ignore')))
             dust = float(str(line[0][0].encode('ascii','ignore')))
             if gas>100:
                 send_email('warning gas over 100 %f'%gas)
-        except Exception as er:    
-            logging.error(str(er))
+        except Exception as er:
+            pass
+            #logging.error(str(er))
     #############################################
     if COLLECT_WIFI_DATA:
         process = subprocess.Popen('sudo iwlist wlan0 scan | egrep "ESSID|Signal"', shell=True, stdout=subprocess.PIPE)
@@ -136,10 +139,8 @@ while True:
     #############################################
     writer1.writerow([session_id,timestamp,'%.2f'%h,'%.2f'%t,'%.2f'%pres,'%.2f'%temp,len(ll),power,dust,gas])
     conn1.flush()            
-    #############################################            
-    tsize = 0
-    for filen in glob(DATA_DIR):
-    	tsize += os.path.getsize(filen)
+    #############################################                
+    tsize = sum([os.path.getsize(filen) for filen in glob(DATA_DIR)])
     if tsize/1e6>limit*1000:
         logging.info('max size limit reached')
         break

@@ -2,7 +2,7 @@
 Read data from various senzors and write to a csv file.\
 This script is meant to run on a raspberry pi.\
 An Arduino is expected to be serial connected to the raspberry.\
-The script works in python2.
+The script works in py2 or 3.
 
 Senzors connected to Raspberry:\
 DHT 22 (digital; temperature and humidiy)\
