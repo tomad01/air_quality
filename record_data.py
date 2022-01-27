@@ -6,10 +6,25 @@ import old.email as em
 import pandas as pd
 import serial
 
+import logging
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+logging.basicConfig(filename=dname+'/logs/senzors.log',format='%(asctime)s %(levelname)s:%(message)s', encoding='utf-8', level=logging.INFO)
+
 from Adafruit_BMP import BMP085
 import Adafruit_DHT as dht
 
-print('py version',sys.version)
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--debug', type=bool, default=False, help='debug')
+args = parser.parse_args()
+
+logging.info('py version '+str(sys.version))
+process = subprocess.Popen('ifconfig | grep wlan', shell=True, stdout=subprocess.PIPE)
+logging.info(process.stdout.read().decode())
+
 ##########################
 PERCENT_FROM_AVAILABLE_SPACE = 0.5 # max space to fill with data
 DATA_DIR = './data'
@@ -17,6 +32,8 @@ SLEEP_TIME = 9
 COLLECT_WIFI_DATA = True
 COLLECT_ARDUINO_DATA = True
 SERIAL_ADDR = '/dev/ttyACM0'
+FILE_NAME = 'data_sensors_test.csv' if args.debug else 'data_sensors.csv'
+DEBUG = args.debug
 ##########################
 
 
@@ -43,13 +60,10 @@ def get_bmp180_data():
         #altitude = 0
     return temp,pressure
 
-abspath = os.path.abspath(__file__)
-dname = os.path.dirname(abspath)
-os.chdir(dname)
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
-file1 = DATA_DIR+'/data_sensors2.csv'
+file1 = DATA_DIR+'/'+FILE_NAME
 add_header = not os.path.exists(file1)
 conn1 = open(file1,'a')
 writer1 = csv.writer(conn1)
@@ -67,7 +81,7 @@ try:
 except Exception as er:
     print(str(er))
     limit = 2
-print('max GB size allowed of data:',limit)
+logging.info('max GB size allowed of data: '+str(limit))
 
 
 wifi_regex = re.compile('Signal level=(\-\d{1,2}) dBm\s+\n\s+ESSID:\"(.+?)\"')
@@ -103,7 +117,7 @@ while True:
             if gas>100:
                 em.send('warning gas over 100 %f'%gas)
         except Exception as er:    
-            print(str(er))
+            logging.error(str(er))
     #############################################
     if COLLECT_WIFI_DATA:
         process = subprocess.Popen('sudo iwlist wlan0 scan | egrep "ESSID|Signal"', shell=True, stdout=subprocess.PIPE)
@@ -114,7 +128,7 @@ while True:
             ll.append(float(item[0]))
         if len(ll)==0:
             ll = [0]        
-        power = round(pd.Series(ll).quantile(.9),2)
+        power = round(pd.Series(ll).quantile(.95),2)
         #conn2.flush()
     else:
         ll,power = [],0
@@ -126,7 +140,7 @@ while True:
     for filen in glob(DATA_DIR):
     	tsize += os.path.getsize(filen)
     if tsize/1e6>limit*1000:
-        print('max size limit reached')
+        logging.info('max size limit reached')
         break
     contor +=1
     
