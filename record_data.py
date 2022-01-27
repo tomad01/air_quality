@@ -2,22 +2,16 @@ from datetime import datetime
 from glob import glob
 import time,csv,os,subprocess,re,pdb,sys
 import uuid
-try:
-    import old.email as em
-except:
-    pass
-import pandas as pd
-import serial
-
 import logging
 import argparse
+import pandas as pd
+import serial
+from Adafruit_BMP import BMP085
+import Adafruit_DHT as dht
 ##########################
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
-
-from Adafruit_BMP import BMP085
-import Adafruit_DHT as dht
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', type=bool, default=False, help='debug')
@@ -30,14 +24,19 @@ COLLECT_WIFI_DATA = True
 COLLECT_ARDUINO_DATA = True
 SERIAL_ADDR = '/dev/ttyACM0'
 DATA_FILE_NAME = 'data_sensors_test.csv' if args.debug else 'data_sensors.csv'
-LOG_FILE = 'senzors_test.log' if args.debug else 'sensors.log'
+LOG_FILE = 'sensors_test.log' if args.debug else 'sensors.log'
 DEBUG = args.debug
 ##########################
 logging.basicConfig(filename=dname+'/logs/'+LOG_FILE,format='%(asctime)s %(levelname)s:%(message)s', encoding='utf-8', level=logging.INFO)
 logging.info('py version '+str(sys.version))
 process = subprocess.Popen('ifconfig | grep wlan', shell=True, stdout=subprocess.PIPE)
 logging.info(process.stdout.read().decode())
-
+try:
+    from old.email import send_email
+except Exception as er:
+    logging.error(str(er))
+    def send_email(dummy):
+        pass
 
 def get_dht22_data():
     try:
@@ -81,7 +80,7 @@ try:
     free = hdd.free/2**30
     limit = int(PERCENT_FROM_AVAILABLE_SPACE *free)
 except Exception as er:
-    print(str(er))
+    logging.error(str(er))
     limit = 2
 logging.info('max GB size allowed of data: '+str(limit))
 
@@ -90,8 +89,8 @@ wifi_regex = re.compile('Signal level=(\-\d{1,2}) dBm\s+\n\s+ESSID:\"(.+?)\"')
 try:
     ser = serial.Serial(SERIAL_ADDR, 9600, timeout=1)
     ser.reset_input_buffer()
-except:
-    pass
+except Exception as er:
+    logging.error(str(er))
 serial_regex = re.compile('ust: (\d+\.\d+) ug\/m3 gas: (\d+\.\d+) en')
 
 
@@ -101,10 +100,7 @@ while True:
     if contor==5:
         process = subprocess.Popen('tail -n 7 %s'%file1, shell=True, stdout=subprocess.PIPE)
         res = process.stdout.read().decode().encode('ascii','ignore')
-        try:
-            em.send(res)
-        except:
-            pass
+        send_email(res)
     #############################################    
     time.sleep(SLEEP_TIME)
     timestamp=datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S")
@@ -120,7 +116,7 @@ while True:
             gas  = float(str(line[0][1].encode('ascii','ignore')))
             dust = float(str(line[0][0].encode('ascii','ignore')))
             if gas>100:
-                em.send('warning gas over 100 %f'%gas)
+                send_email('warning gas over 100 %f'%gas)
         except Exception as er:    
             logging.error(str(er))
     #############################################
