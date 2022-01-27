@@ -12,4 +12,4 @@ GP2Y1010AU0F (analogic dust senzor using infrared led - 20 mA)\
 Arduino is waiting from Raspberry an income message and then collects and send data.\
 Raspberry gets all data and is writing it down to a csv periodically
 
-
+The process is automated using supervisord (see conf files)
