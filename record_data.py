@@ -4,8 +4,11 @@ import time,csv,os,subprocess,sys
 import uuid
 import logging
 import argparse
-from dotenv import load_dotenv
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except:
+    pass
 # from apihelper.email import send_email
 import apihelper.sensors as sens
 ##########################

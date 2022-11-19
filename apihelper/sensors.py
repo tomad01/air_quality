@@ -4,8 +4,7 @@ from Adafruit_BMP import BMP085
 import logging
 import re,serial,subprocess
 from apihelper.email import send_email
-import pandas as pd
-
+import numpy as np
 
 def create_row(collected,header):
     res = {}
@@ -85,7 +84,7 @@ class CollectWIFIdata:
                 ll.append(float(item[0]))
             if len(ll)==0:
                 ll = [0]        
-            power = round(pd.Series(ll).quantile(.95),2)
+            power = round(np.percentile(ll, 95,interpolation = 'midpoint'),2)
             #conn2.flush()
         except:
             ll,power = [],0
