@@ -8,6 +8,9 @@ import pandas as pd
 import serial
 from Adafruit_BMP import BMP085
 import Adafruit_DHT as dht
+from dotenv import load_dotenv
+load_dotenv()
+from apihelper.email import send_email
 ##########################
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -33,12 +36,9 @@ logging.basicConfig(filename=dname+'/logs/'+LOG_FILE,
 logging.info('py version '+str(sys.version))
 process = subprocess.Popen('ifconfig | grep wlan', shell=True, stdout=subprocess.PIPE)
 logging.info(process.stdout.read().decode())
-try:
-    from old.email import send_email
-except Exception as er:
-    logging.error(str(er))
-    def send_email(dummy):
-        pass
+
+
+
 
 def get_dht22_data():
     try:
