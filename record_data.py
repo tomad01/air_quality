@@ -41,7 +41,7 @@ if not os.path.exists(DATA_DIR):
 file1 = DATA_DIR+'/'+DATA_FILE_NAME
 conn1 = open(file1,'a')
 writer1 = csv.writer(conn1)
-header = ['session_id','timestamp','humidity','temp_dht','pressure','temp_bmp','wifi_conns','90_perc_wifi_power','dust','gas']
+header = ['session_id','timestamp','humidity','temp_dht','pressure','temp_bmp','wifi_conns','mean_wifi_power','dust','gas']
 if not os.path.exists(file1):
     writer1.writerow(header)
 #file2 = DATA_DIR+'/data_wifi.csv'

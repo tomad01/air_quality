@@ -4,7 +4,6 @@ from Adafruit_BMP import BMP085
 import logging
 import re,serial,subprocess
 from apihelper.email import send_email
-import numpy as np
 
 def create_row(collected,header):
     res = {}
@@ -83,9 +82,10 @@ class CollectWIFIdata:
                 #writer2.writerow([timestamp,item[0],item[1]])
                 ll.append(float(item[0]))
             if len(ll)==0:
-                ll = [0]        
-            power = round(np.percentile(ll, 95,interpolation = 'midpoint'),2)
+                ll = [0]      
+            fll = [i for i in ll if i > - 90]  
+            power = round(sum(fll)/len(fll),2)
             #conn2.flush()
         except:
             ll,power = [],0
-        return {'wifi_conns':len(ll),'90_perc_wifi_power':power}
+        return {'wifi_conns':len(ll),'mean_wifi_power':power}
