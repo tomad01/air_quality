@@ -2,3 +2,5 @@
 **/data
 **/old
 .env
+**/__pycache__
+*.pyc
