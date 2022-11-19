@@ -39,10 +39,11 @@ if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
 file1 = DATA_DIR+'/'+DATA_FILE_NAME
+write_header = not os.path.exists(file1)
 conn1 = open(file1,'a')
 writer1 = csv.writer(conn1)
 header = ['session_id','timestamp','humidity','temp_dht','pressure','temp_bmp','wifi_conns','mean_wifi_power','dust','gas']
-if not os.path.exists(file1):
+if write_header:
     writer1.writerow(header)
 #file2 = DATA_DIR+'/data_wifi.csv'
 #conn2 = open(file2,'a')
