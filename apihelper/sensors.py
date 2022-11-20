@@ -5,11 +5,7 @@ import logging
 import re,serial,subprocess
 from apihelper.email import send_email
 
-def create_row(collected,header):
-    res = {}
-    for di in collected:
-        res.update(di)
-    return [res[item] for item in header]
+
 
 class CollectDHT22:
     def __init__(self):
@@ -61,8 +57,8 @@ class CollectArduino:
             line = self.serial_regex.findall(line)
             gas  = float(str(line[0][1].encode('ascii','ignore')))
             dust = float(str(line[0][0].encode('ascii','ignore')))
-            if gas>100:
-                send_email('warning gas over 100 %f'%gas)
+            #if gas>100:
+            #    send_email('warning gas over 100 %f'%gas)
         except Exception as er:
             gas,dust =0,0
             #logging.error(str(er))

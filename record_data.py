@@ -1,85 +1,62 @@
 from datetime import datetime
-from glob import glob
-import time,csv,os,subprocess,sys
+
+import time,os,subprocess,sys
 import uuid
 import logging
-import argparse
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+#os.chdir(dname)
+LOG_FILE = 'sensors.log'
+logging.basicConfig(filename=dname+'/logs/'+LOG_FILE,
+                    format='%(asctime)s %(levelname)s:%(message)s', 
+                    level=logging.INFO)
+# import argparse
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except:
     pass
-# from apihelper.email import send_email
 import apihelper.sensors as sens
-##########################
-abspath = os.path.abspath(__file__)
-dname = os.path.dirname(abspath)
-os.chdir(dname)
-##########################
-parser = argparse.ArgumentParser()
-parser.add_argument('--debug', type=bool, default=False, help='debug')
-args = parser.parse_args()
-##########################
-PERCENT_FROM_AVAILABLE_SPACE = 0.5 # max space to fill with data
-DATA_DIR = './data'
+from apihelper.datawriter import CSVWriter
+# from apihelper.email import send_email
+
+
+
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--debug', type=bool, default=False, help='debug')
+# args = parser.parse_args()
+
 SLEEP_TIME = 9
-DATA_FILE_NAME = 'data_sensors_test.csv' if args.debug else 'data_sensors.csv'
-LOG_FILE = 'sensors_test.log' if args.debug else 'sensors.log'
-DEBUG = args.debug
-##########################
-logging.basicConfig(filename=dname+'/logs/'+LOG_FILE,
-                    format='%(asctime)s %(levelname)s:%(message)s', 
-                    level=logging.INFO)
 logging.info('py version '+str(sys.version))
 process = subprocess.Popen('ifconfig | grep wlan', shell=True, stdout=subprocess.PIPE)
 logging.info(process.stdout.read().decode())
 
 
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
 
-file1 = DATA_DIR+'/'+DATA_FILE_NAME
-write_header = not os.path.exists(file1)
-conn1 = open(file1,'a')
-writer1 = csv.writer(conn1)
-header = ['session_id','timestamp','humidity','temp_dht','pressure','temp_bmp','wifi_conns','mean_wifi_power','dust','gas']
-if write_header:
-    writer1.writerow(header)
-#file2 = DATA_DIR+'/data_wifi.csv'
-#conn2 = open(file2,'a')
-#writer2 = csv.writer(conn2)
-
-try:
-    import psutil
-    hdd = psutil.disk_usage('/')
-    free = hdd.free/2**30
-    limit = int(PERCENT_FROM_AVAILABLE_SPACE *free)
-except Exception as er:
-    logging.error(str(er))
-    limit = 2
-logging.info('max GB size allowed of data: '+str(limit))
 
 
 session_id = str(uuid.uuid1())
-# contor = 0
 collectors = [sens.CollectDHT22(),sens.CollectBMP180(),sens.CollectArduino(),sens.CollectWIFIdata()]
+datawriter = CSVWriter()
+# contor = 0
 while True:
+
     # if contor==5:
-    #     process = subprocess.Popen('tail -n 7 %s'%file1, shell=True, stdout=subprocess.PIPE)
+    #     process = subprocess.Popen('tail -n 7 %s'%datawriter.file_full_path, shell=True, stdout=subprocess.PIPE)
     #     res = process.stdout.read().decode().encode('ascii','ignore')
     #     send_email(res)
-    #############################################    
+    # contor +=1
+    
     time.sleep(SLEEP_TIME)    
     collected = [cc.collect() for cc in collectors]
-    collected.append({'session_id':session_id,'timestamp':datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S")})
-    writer1.writerow(sens.create_row(collected,header))
-    conn1.flush()            
-    #############################################                
-    tsize = sum([os.path.getsize(filen) for filen in glob(DATA_DIR)])
-    if tsize/1e6>limit*1000:
+    collected.append({
+        'session_id':session_id,
+        'timestamp':datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S")
+        })
+    datawriter.write(collected)           
+    if datawriter.file_too_big():
         logging.info('max size limit reached')
         break
-    # contor +=1
     
     
 """
